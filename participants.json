@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Alexander Keterling",
+    "userId": 41,
+    "tagId": "1234"
+  },
+  {
+    "name": "Arved Oberstrass",
+    "userId": 44,
+    "tagId": "1234"
+  },
+  {
+    "name": "Florian Hoehle",
+    "userId": 40,
+    "tagId": "e8101c3e"
+  },
+  {
+    "name": "Mario Schanzenbach",
+    "userId": 33,
+    "tagId": "0891223e"
+  },
+  {
+    "name": "Niko Lerch",
+    "userId": 43,
+    "tagId": "1234"
+  },
+  {
+    "name": "Ulf Leis",
+    "userId": 42,
+    "tagId": "1234"
+  }
+]

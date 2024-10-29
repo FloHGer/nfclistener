@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  nfclistener:
+    container_name: nfclistener
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - "${USERPROFILE}/Documents/logs:/src/logs"
+    devices:
+      - /dev/bus/usb:/dev/bus/usb/001/003
+    restart: always
+    privileged: true
