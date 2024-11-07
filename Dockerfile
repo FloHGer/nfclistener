@@ -19,6 +19,6 @@ RUN npm install
 
 COPY . .
 
-RUN usermod -aG plugdev $(whoami)
+RUN usermod -aG plugdev root
 
 CMD service pcscd start && npm start

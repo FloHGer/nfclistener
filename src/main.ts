@@ -4,10 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import Database from './database';
-import { UserType } from './types/database';
-
-
-
+import { ParticipantType } from './types/database';
 
 
 (async function main () {
@@ -21,91 +18,65 @@ import { UserType } from './types/database';
     if (!db) throw Error('DB init ERROR');
     await db.auth(DB_EMAIL, DB_PASS);
 
-    // get current days presence for floh
-    const x = await db.client
-    .from('anwesenheiten')
-    .select()
-    .eq('anw_tn_id', 40)
-    .eq('anw_datum', '20241029');
-    console.log(x.data)
-
-    // delete current days presence for floh
-    // const x = await db.client
-    //   .from('anwesenheiten')
-    //   .delete()
-    //   .eq('anw_tn_id', 40)
-    //   .eq('anw_datum', '20241029');
-    //   console.log(x.data)
-
-    // get floh data
-    // const x = await db.client
-    //   .from('teilnehmer')
-    //   .select()
-    //   .eq('tn_id', 40)
-    //   console.log(x.data)
-
-    // db.getUserByRfid('e8101c3e')
-
-    // set floh rfid
-    // const x = await db.client
-    // .from('teilnehmer')
-    // .update({
-    //   tn_rfid: ['e8101c3e']
-    // })
-    // .eq('tn_id', 40)
-    // console.log(x.data)
-
     const nfc = new NFC();
     console.info('NFC listener initialized. Waiting to detect reader...');
 
+
     nfc.on('reader', async (reader: InstanceType<typeof Reader>) => {
       console.info(`NFC Reader detected: ${reader.name}`);
+      console.info('Ready to READ.');
 
       reader.on('card', async (card :any) => {
-
-        if (card.type === 'ISO_14443_4') {
-          console.info('Smartphone detected. UID:', card.uid);
+        if (card.type === 'TAG_ISO_14443_4') {
+          console.info('Smartphone detected.');
         } 
-        if (card.type != 'ISO_14443_4') {
-          console.info('Non-smartphone NFC tag detected. UID:', card.uid);
+        if (card.type != 'TAG_ISO_14443_4') {
+          console.info('Non-Smartphone NFC tag detected. UID:', card.uid);
         }
 
-        const user: UserType = await db.getUserByRfid(card.uid);
+        const participant: ParticipantType = await db.getUserByRfid(card.uid);
 
-        if(user) {
+        if(participant) {
           const now = new Date();
           const currentDate = now.toLocaleDateString('en-CA').replaceAll('-', '');
           const currentTime = now.getHours() * 60 + now.getMinutes();
           const blockingPeriodInMinutes = 5;
-          const todaysPresence = await db.fetchPresenceByUidAndDate(user.tn_id, currentDate);
+          const todaysPresence = await db.fetchPresenceByUidAndDate(participant.tn_id, currentDate);
 
           if (todaysPresence) {
             if (todaysPresence.anw_bis_uhrzeit) {
-              console.error(`${user.tn_vorname} ${user.tn_nachname} already logged for today.`);
+              console.error(`${participant.tn_vorname} ${participant.tn_nachname} already logged for today.`);
+              console.info('Ready to READ.');
               return;
             }
             if (todaysPresence.anw_von_uhrzeit) {
               if (todaysPresence.anw_von_uhrzeit + blockingPeriodInMinutes > currentTime) {
-                console.info(`${user.tn_vorname} ${user.tn_nachname} was logged within the last ${blockingPeriodInMinutes} minutes`);
+                console.info(`${
+                  participant.tn_vorname} ${participant.tn_nachname
+                } was logged within the last ${blockingPeriodInMinutes} minutes`);
+                console.info('Ready to READ.');
                 return;
               }
 
               db.updatePresenceWithDeparture(
-                user.tn_id,
+                participant.tn_id,
                 currentDate,
                 currentTime,
               )
-              console.info(`${user.tn_vorname} ${user.tn_nachname}'s departure logged`);
+              console.info(`${participant.tn_vorname} ${participant.tn_nachname}'s departure logged`);
+              console.info('Ready to READ.');
               return;
             }
           }
+
           db.insertPresence(
-            user.tn_id,
+            participant.tn_id,
             currentDate,
             currentTime,
-            user.tn_modifikator,
+            participant.tn_modifikator,
           )
-          console.info(`${user.tn_vorname} ${user.tn_nachname}'s arrival logged`);
+          console.info(`${participant.tn_vorname} ${participant.tn_nachname}'s arrival logged`);
+          console.info('Ready to READ.');
           return;
         }
       });

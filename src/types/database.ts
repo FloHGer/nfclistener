@@ -1,4 +1,4 @@
-export type UserType = {
+export type ParticipantType = {
   tn_id: number,
   tn_created_at: string | null,
   tn_nachname: string | null,

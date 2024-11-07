@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-import { PresenceType } from './types/database';
+import { PresenceType, ParticipantType } from './types/database';
 
 
 export default class Database {
@@ -61,10 +61,10 @@ export default class Database {
   ): Promise<PresenceType | null> {
     try{
       const { data, error } = await this.client
-      .from('anwesenheiten')
-      .select()
-      .eq('anw_tn_id', uid)
-      .eq('anw_datum', date);
+        .from('anwesenheiten')
+        .select()
+        .eq('anw_tn_id', uid)
+        .eq('anw_datum', date);
 
       if (error) throw error;
       if (data.length === 1) return data[0];
@@ -79,7 +79,7 @@ export default class Database {
     date: string,
     arrival: number,
     timeMod: number,
-  ) {
+  ): Promise<any> {
     try {
       const { error } = await this.client
         .from('anwesenheiten')
@@ -92,7 +92,6 @@ export default class Database {
         })
 
       if (error) throw error;
-      return 
     } catch (error) {
       console.error(error);
     }
@@ -102,7 +101,7 @@ export default class Database {
     userId: number,
     date: string,
     departure: number,
-  ) {
+  ): Promise<any> {
     try {
       const { error } = await this.client
         .from('anwesenheiten')
@@ -112,7 +111,59 @@ export default class Database {
         .eq('anw_tn_id', userId)
         .eq('anw_datum', date)
 
-        if (error) throw error;
+      if (error) throw error;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async getParticipantsListWithNamesAndIds (): Promise<any> {
+    try {
+      const { data, error } = await this.client
+        .from('teilnehmer')
+        .select('tn_vorname, tn_nachname, tn_id, tn_rfid');
+  
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async updateParticipantWithRfid (
+    tagId: string,
+    participantId: string,
+  ): Promise<any> {
+    try {
+      const { data, error } = await this.client
+        .from('teilnehmer')
+        .update({
+          tn_rfid: [tagId]
+        })
+        .eq('tn_id', participantId)
+        .select('tn_id, tn_vorname, tn_nachname, tn_rfid')
+  
+      if (error) throw error;
+      return data[0];
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async removeRfid (
+    participantId: string,
+  ): Promise<any> {
+    try {
+      const { data, error } = await this.client
+        .from('teilnehmer')
+        .update({
+          tn_rfid: null
+        })
+        .eq('tn_id', participantId)
+        .select('tn_id, tn_vorname, tn_nachname, tn_rfid')
+  
+      if (error) throw error;
+      return data[0];
     } catch (error) {
       console.error(error);
     }

@@ -1,13 +1,13 @@
 {
-  "name": "nfc_reader",
+  "name": "nfclistener",
   "version": "1.0.0",
   "main": "index.ts",
   "type": "commonjs",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/main.ts",
     "dev": "ts-node --transpile-only src/index.ts",
-    "write": "ts-node src/write.ts"
+    "start": "ts-node src/main.ts",
+    "admin": "ts-node src/admin.ts"
   },
   "author": "",
   "license": "ISC",
