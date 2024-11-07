@@ -57,10 +57,11 @@ const userInput = (prompt: string): Promise<string> => {
               answer = (await userInput('Do you want to [r]emove the tag or [a]pply it to another participant?\n')).toLowerCase();
             } while (answer != 'r' &&  answer != 'a');
 
+            await db.removeRfid(participant.tn_id);
+            console.warn(`Tag ${card.uid} detached from ${participant.tn_vorname} ${participant.tn_nachname}`);
+
             if (answer === 'r') {
-              await db.removeRfid(participant.tn_id);
-              console.warn(`Tag ${card.uid} detached from ${participant.tn_vorname} ${participant.tn_nachname}`);
-              console.info('\nReady to WRITE.');
+              console.info('\nReady to READ.');
               return;
             }
             break;
@@ -72,19 +73,20 @@ const userInput = (prompt: string): Promise<string> => {
           console.info(`${index}: ${participant.tn_vorname} ${participant.tn_nachname}`)
         }
 
-        let selectedParticipantId :number;
+        let selectedParticipantIndex :number;
         do {
-          selectedParticipantId = parseInt(await userInput('----\nSelect index of the user to attach the tag to:'));
-        } while(!participantList.find((participant : ParticipantType) =>
-          participant.tn_id === selectedParticipantId
+          selectedParticipantIndex = parseInt(await userInput('----\nSelect index of the user to attach the tag to:'));
+        } while(!participantList.find((participant : ParticipantType) => {
+          return participant.tn_id === participantList[selectedParticipantIndex].tn_id;
+        }
         ));
-        const selectedUser: Participant = participantList[selectedParticipantId];
+        const selectedUser: Participant = participantList[selectedParticipantIndex];
 
         const updatedParticipant: ParticipantType = await db.updateParticipantWithRfid(card.uid, selectedUser.tn_id);
         
         console.warn(`Tag added to ${selectedUser.tn_vorname} ${selectedUser.tn_nachname}`);
         console.info(updatedParticipant);
-        console.info('\nReady to WRITE.');
+        console.info('\nReady to READ.');
       });
 
       reader.on('error', (error :Error) => {
