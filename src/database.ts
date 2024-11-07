@@ -117,6 +117,20 @@ export default class Database {
     }
   }
 
+  async getTimeDifferenceInMin (
+    uid: number,
+    date: string,
+  ): Promise<any> {
+    try{
+      const presence = await this.fetchPresenceByUidAndDate(uid, date);
+      if (!presence || !presence.anw_bis_uhrzeit || !presence.anw_von_uhrzeit) throw Error;
+      return presence.anw_bis_uhrzeit - presence.anw_von_uhrzeit - (8 * 60 + 30);
+
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async getParticipantsListWithNamesAndIds (): Promise<any> {
     try {
       const { data, error } = await this.client

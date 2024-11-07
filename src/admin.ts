@@ -84,7 +84,7 @@ const userInput = (prompt: string): Promise<string> => {
 
         const updatedParticipant: ParticipantType = await db.updateParticipantWithRfid(card.uid, selectedUser.tn_id);
         
-        console.warn(`Tag added to ${selectedUser.tn_vorname} ${selectedUser.tn_nachname}`);
+        console.warn(`Tag attached to ${selectedUser.tn_vorname} ${selectedUser.tn_nachname}`);
         console.info(updatedParticipant);
         console.info('\nReady to READ.');
       });

@@ -38,10 +38,12 @@ import { ParticipantType } from './types/database';
 
         if(participant) {
           const now = new Date();
-          const currentDate = now.toLocaleDateString('en-CA').replaceAll('-', '');
-          const currentTime = now.getHours() * 60 + now.getMinutes();
+          const currentDateForDb = now.toLocaleDateString('en-CA').replaceAll('-', '');
+          const currentTimeForDb = now.getHours() * 60 + now.getMinutes();
+          const currentDateForHumans = now.toLocaleDateString('de-DE');
+          const currentTimeForHumans = `${now.getHours()}:${now.getMinutes()}`;
           const blockingPeriodInMinutes = 5;
-          const todaysPresence = await db.fetchPresenceByUidAndDate(participant.tn_id, currentDate);
+          const todaysPresence = await db.fetchPresenceByUidAndDate(participant.tn_id, currentDateForDb);
 
           if (todaysPresence) {
             if (todaysPresence.anw_bis_uhrzeit) {
@@ -50,32 +52,33 @@ import { ParticipantType } from './types/database';
               return;
             }
             if (todaysPresence.anw_von_uhrzeit) {
-              if (todaysPresence.anw_von_uhrzeit + blockingPeriodInMinutes > currentTime) {
-                console.info(`${
+              if (todaysPresence.anw_von_uhrzeit + blockingPeriodInMinutes > currentTimeForDb) {
+                console.warn(`${
                   participant.tn_vorname} ${participant.tn_nachname
                 } was logged within the last ${blockingPeriodInMinutes} minutes`);
                 console.info('Ready to READ.');
                 return;
               }
 
-              db.updatePresenceWithDeparture(
+              await db.updatePresenceWithDeparture(
                 participant.tn_id,
-                currentDate,
-                currentTime,
+                currentDateForDb,
+                currentTimeForDb,
               )
-              console.info(`${participant.tn_vorname} ${participant.tn_nachname}'s departure logged`);
+              console.warn(`${participant.tn_vorname} ${participant.tn_nachname}'s departure logged on ${currentDateForHumans} at ${currentTimeForHumans}`);
+              console.warn(`Time difference today: ${await db.getTimeDifferenceInMin(participant.tn_id, currentDateForDb)}min`)
               console.info('Ready to READ.');
               return;
             }
           }
 
-          db.insertPresence(
+          await db.insertPresence(
             participant.tn_id,
-            currentDate,
-            currentTime,
+            currentDateForDb,
+            currentTimeForDb,
             participant.tn_modifikator,
           )
-          console.info(`${participant.tn_vorname} ${participant.tn_nachname}'s arrival logged`);
+          console.warn(`${participant.tn_vorname} ${participant.tn_nachname}'s arrival logged on ${currentDateForHumans} at ${currentTimeForHumans}`);
           console.info('Ready to READ.');
           return;
         }
