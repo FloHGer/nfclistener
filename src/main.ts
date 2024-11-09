@@ -82,6 +82,7 @@ import { ParticipantType } from './types/database';
           console.info('Ready to READ.');
           return;
         }
+        console.warn('NO Participant attached to this Tag.')
       });
 
       reader.on('error', (error :Error) => {
