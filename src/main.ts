@@ -52,68 +52,72 @@ const ledError = [0b01001101, [0x01, 0x01, 0x05, 0x01]];
       console.info('Ready to READ.');
 
       reader.on('card', async (card :any) => {
-        if (card.type === 'TAG_ISO_14443_4') {
-          console.info('Smartphone detected.');
-        } 
-        if (card.type != 'TAG_ISO_14443_4') {
-          console.info('Non-Smartphone NFC tag detected. UID:', card.uid);
-        }
-
-        const participant: ParticipantType = await db.getUserByRfid(card.uid);
-
-        if(!participant) {
-          await reader.led(...ledError);
-          return console.error('This Tag is not registered.');
-        }
-
-        const now = new Date();
-        const currentDateForDb = now.toLocaleDateString('en-CA').replaceAll('-', '');
-        const currentTimeForDb = now.getHours() * 60 + now.getMinutes();
-        const currentDateForHumans = now.toLocaleDateString('de-DE');
-        const currentTimeForHumans = `${now.getHours()}:${now.getMinutes()}`;
-        const blockingPeriodInMinutes = 5;
-        const todaysPresence = await db.fetchPresenceByUidAndDate(participant.tn_id, currentDateForDb);
-
-        if (todaysPresence) {
-          if (todaysPresence.anw_bis_uhrzeit) {
-            await reader.led(...ledWarning);
-            console.error(`${participant.tn_vorname} ${participant.tn_nachname} already logged for today.`);
-            console.info('Ready to READ.');
-            return;
+        try{
+          if (card.type === 'TAG_ISO_14443_4') {
+            console.info('Smartphone detected.');
+          } 
+          if (card.type != 'TAG_ISO_14443_4') {
+            console.info('Non-Smartphone NFC tag detected. UID:', card.uid);
           }
-          if (todaysPresence.anw_von_uhrzeit) {
-            if (todaysPresence.anw_von_uhrzeit + blockingPeriodInMinutes > currentTimeForDb) {
+
+          const participant: ParticipantType = await db.getUserByRfid(card.uid);
+
+          if(!participant) {
+            await reader.led(...ledError);
+            return console.error('This Tag is not registered.');
+          }
+
+          const now = new Date();
+          const currentDateForDb = now.toLocaleDateString('en-CA').replaceAll('-', '');
+          const currentTimeForDb = now.getHours() * 60 + now.getMinutes();
+          const currentDateForHumans = now.toLocaleDateString('de-DE');
+          const currentTimeForHumans = `${now.getHours()}:${now.getMinutes()}`;
+          const blockingPeriodInMinutes = 5;
+          const todaysPresence = await db.fetchPresenceByUidAndDate(participant.tn_id, currentDateForDb);
+
+          if (todaysPresence) {
+            if (todaysPresence.anw_bis_uhrzeit) {
               await reader.led(...ledWarning);
-              console.warn(`${
-                participant.tn_vorname} ${participant.tn_nachname
-              } was logged within the last ${blockingPeriodInMinutes} minutes`);
+              console.error(`${participant.tn_vorname} ${participant.tn_nachname} already logged for today.`);
               console.info('Ready to READ.');
               return;
             }
+            if (todaysPresence.anw_von_uhrzeit) {
+              if (todaysPresence.anw_von_uhrzeit + blockingPeriodInMinutes > currentTimeForDb) {
+                await reader.led(...ledWarning);
+                console.warn(`${
+                  participant.tn_vorname} ${participant.tn_nachname
+                } was logged within the last ${blockingPeriodInMinutes} minutes`);
+                console.info('Ready to READ.');
+                return;
+              }
 
-            await db.updatePresenceWithDeparture(
-              participant.tn_id,
-              currentDateForDb,
-              currentTimeForDb,
-            )
-            await reader.led(...ledSuccess);
-            console.warn(`${participant.tn_vorname} ${participant.tn_nachname}'s departure logged on ${currentDateForHumans} at ${currentTimeForHumans}`);
-            console.warn(`Time difference today: ${await db.getTimeDifferenceInMin(participant.tn_id, currentDateForDb)}min`)
-            console.info('Ready to READ.');
-            return;
+              await db.updatePresenceWithDeparture(
+                participant.tn_id,
+                currentDateForDb,
+                currentTimeForDb,
+              )
+              await reader.led(...ledSuccess);
+              console.warn(`${participant.tn_vorname} ${participant.tn_nachname}'s departure logged on ${currentDateForHumans} at ${currentTimeForHumans}`);
+              console.warn(`Time difference today: ${await db.getTimeDifferenceInMin(participant.tn_id, currentDateForDb)}min`)
+              console.info('Ready to READ.');
+              return;
+            }
           }
-        }
 
-        await db.insertPresence(
-          participant.tn_id,
-          currentDateForDb,
-          currentTimeForDb,
-          participant.tn_modifikator,
-        )
-        await reader.led(...ledSuccess);
-        console.warn(`${participant.tn_vorname} ${participant.tn_nachname}'s arrival logged on ${currentDateForHumans} at ${currentTimeForHumans}`);
-        console.info('Ready to READ.');
-        return;
+          await db.insertPresence(
+            participant.tn_id,
+            currentDateForDb,
+            currentTimeForDb,
+            participant.tn_modifikator,
+          )
+          await reader.led(...ledSuccess);
+          console.warn(`${participant.tn_vorname} ${participant.tn_nachname}'s arrival logged on ${currentDateForHumans} at ${currentTimeForHumans}`);
+          console.info('Ready to READ.');
+          return;
+        } catch(error) {
+          console.error(error);
+        }
       });
 
       reader.on('error', (error :Error) => {
