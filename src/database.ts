@@ -17,9 +17,12 @@ export default class Database {
   };
 
   init (): SupabaseClient {
-    if (!this.url) throw Error('URL missing')
-    if (!this.key) throw Error('KEY missing')
-    return createClient(this.url!, this.key!);
+    if (!this.url) throw Error('URL missing');
+    if (!this.key) throw Error('KEY missing');
+    return createClient(this.url!, this.key!, {auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    }});
   };
 
   async auth (

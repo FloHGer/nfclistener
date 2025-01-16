@@ -53,13 +53,7 @@ const ledError = [0b01001101, [0x01, 0x01, 0x05, 0x01]];
 
       reader.on('card', async (card :any) => {
         try{
-          if (card.type === 'TAG_ISO_14443_4') {
-            console.info('Smartphone detected.');
-          } 
-          if (card.type != 'TAG_ISO_14443_4') {
-            console.info('Non-Smartphone NFC tag detected. UID:', card.uid);
-          }
-
+          await db.auth(DB_EMAIL, DB_PASS);
           const participant: ParticipantType = await db.getUserByRfid(card.uid);
 
           if(!participant) {
